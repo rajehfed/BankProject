@@ -130,6 +130,7 @@
     <ClCompile Include="Bank.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ATM_System.h" />
     <ClInclude Include="extesion.h" />
     <ClInclude Include="MainBank.h" />
   </ItemGroup>

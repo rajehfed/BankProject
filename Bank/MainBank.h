@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <Windows.h>
 #include "extesion.h"
+#include "ATM_System.h"
 
 using namespace std;
 const string ClientsFileName = "Clients.txt";
@@ -13,6 +15,11 @@ const string ClientsFileName = "Clients.txt";
 void ShowMainMenue();
 void ShowTransactionsMenue();
 void ShowUserManage();
+
+void SetConsoleColor(int color) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, color);
+}
 
 struct sClient
 {
@@ -23,6 +30,8 @@ struct sClient
     double AccountBalance = 0.00;
     bool MarkForDelete = false;
 };
+
+sClient CurrentClient;
 
 vector<string> SplitString(string S1, string Delim)
 {
@@ -493,35 +502,28 @@ bool UpdateClientByAccountNumber(string AccountNumber, vector <sClient>& vClient
 
 }
 
-bool DepositBalanceToClientByAccountNumber(string AccountNumber, double Amount, vector <sClient>& vClients)
+bool DepositBalanceToClientByAccountNumber(string& AccountNumber, double Amount, vector <sClient>& vClients)
 {
-
-
     char Answer = 'n';
-
-
+    SetConsoleColor(3);
     cout << "\n\nAre you sure you want perfrom this transaction? y/n ? ";
     cin >> Answer;
-    if (Answer == 'y' || Answer == 'Y')
-    {
 
-        for (sClient& C : vClients)
-        {
-            if (C.AccountNumber == AccountNumber)
-            {
+    if (Answer == 'y' || Answer == 'Y') {
+        for (sClient& C : vClients) {
+            if (C.AccountNumber == AccountNumber) {
                 C.AccountBalance += Amount;
+                if (CurrentClient.AccountNumber == AccountNumber) {
+                    CurrentClient.AccountBalance = C.AccountBalance;
+                }
                 SaveCleintsDataToFile(ClientsFileName, vClients);
+                SetConsoleColor(10);
                 cout << "\n\nDone Successfully. New balance is: " << C.AccountBalance;
-
                 return true;
             }
-
         }
-
-
         return false;
     }
-
 }
 
 string ReadClientAccountNumber()
@@ -598,21 +600,15 @@ void ShowDepositScreen()
     cout << "\tDeposit Screen";
     cout << "\n-----------------------------------\n";
 
-
-    sClient Client;
-
     vector <sClient> vClients = LoadCleintsDataFromFile(ClientsFileName);
-    string AccountNumber = ReadClientAccountNumber();
+    string AccountNumber = CurrentClient.AccountNumber;
 
 
-    while (!FindClientByAccountNumber(AccountNumber, vClients, Client))
+    while (!FindClientByAccountNumber(AccountNumber, vClients, CurrentClient))
     {
         cout << "\nClient with [" << AccountNumber << "] does not exist.\n";
         AccountNumber = ReadClientAccountNumber();
     }
-
-
-    PrintClientCard(Client);
 
     double Amount = 0;
     cout << "\nPlease enter deposit amount? ";
@@ -625,36 +621,33 @@ void ShowDepositScreen()
 void ShowWithDrawScreen()
 {
     cout << "\n-----------------------------------\n";
-    cout << "\tWithdraw Screen";
+    cout << "\tNormal Withdraw Screen";
     cout << "\n-----------------------------------\n";
 
     sClient Client;
 
     vector <sClient> vClients = LoadCleintsDataFromFile(ClientsFileName);
-    string AccountNumber = ReadClientAccountNumber();
+    string AccountNumber = CurrentClient.AccountNumber;
 
-
-    while (!FindClientByAccountNumber(AccountNumber, vClients, Client))
-    {
-        cout << "\nClient with [" << AccountNumber << "] does not exist.\n";
-        AccountNumber = ReadClientAccountNumber();
-    }
-
-    PrintClientCard(Client);
-
-    double Amount = 0;
-    cout << "\nPlease enter withdraw amount? ";
+    int Amount = 0;
+    cout << "\nEnter an Amount Multiple of 5's ? ";
     cin >> Amount;
 
+    while (Amount % 5 != 0)
+    {
+        cout << "\nEnter an Amount Multiple of 5's ? ";
+        cin >> Amount;
+    }
+
     //Validate that the amount does not exceeds the balance
-    while (Amount > Client.AccountBalance)
+    while (Amount > CurrentClient.AccountBalance)
     {
         cout << "\nAmount Exceeds the balance, you can withdraw up to : " << Client.AccountBalance << endl;
         cout << "Please enter another amount? ";
         cin >> Amount;
     }
-
-    DepositBalanceToClientByAccountNumber(AccountNumber, Amount * -1, vClients);
+    
+    DepositBalanceToClientByAccountNumber(CurrentClient.AccountNumber, Amount * -1, vClients);
 
 }
 
@@ -665,8 +658,8 @@ void ShowTotalBalancesScreen()
 
 }
 
-enum enTransactionsMenueOptions { eDeposit = 1, eWithdraw = 2, eShowTotalBalance = 3, eShowMainMenue = 4 };
 
+enum enTransactionsMenueOptions { eDeposit = 1, eWithdraw = 2, eShowTotalBalance = 3, eShowMainMenue = 4 };
 enum enMainMenueOptions { eListClients = 1, eAddNewClient = 2, eDeleteClient = 3, eUpdateClient = 4, eFindClient = 5, eShowTransactionsMenue = 6, eManageUsers = 7, eExit = 8 };
 
 void GoBackToMainMenue()
@@ -748,7 +741,7 @@ void ShowTransactionsMenue()
 
 short ReadMainMenueOption()
 {
-    cout << "Choose what do you want to do? [1 to 7]? ";
+    cout << "Choose what do you want to do? [1 to 5]? ";
     short Choice = 0;
     cin >> Choice;
 

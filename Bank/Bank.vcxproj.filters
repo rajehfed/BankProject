@@ -26,5 +26,8 @@
     <ClInclude Include="extesion.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="ATM_System.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
